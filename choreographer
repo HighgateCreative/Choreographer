@@ -1,2 +1,62 @@
-#! /usr/local/bin/perl
+#!/usr/bin/perl
 
+eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+
+use lib 'local/lib/perl5'; # TODO: Convert to local::lib
+use lib 'lib';
+
+use strict;
+use warnings;
+
+use Dancer::Choreographer;
+
+choreograph('[
+          {
+            "models" : [
+                          {
+                            "readable_name" : "Test",
+                            "write_file" : 1,
+                            "table_name" : "test",
+                            "attributes" : [
+                                              {
+                                                "inline" : 0,
+                                                "options" : [],
+                                                "order" : "0",
+                                                "static_label" : 0,
+                                                "type" : "text",
+                                                "label" : "Test",
+                                                "max_length" : 0
+                                              },
+                                              {
+                                                "inline" : 0,
+                                                "options" : [],
+                                                "order" : "1",
+                                                "static_label" : 0,
+                                                "type" : "email",
+                                                "label" : "Email",
+                                                "max_length" : 0
+                                              },
+                                              {
+                                                "inline" : 0,
+                                                "options" : [
+                                                               "Male",
+                                                               "Female"
+                                                             ],
+                                                "order" : "2",
+                                                "static_label" : 0,
+                                                "type" : "radio",
+                                                "label" : "Gender",
+                                                "max_length" : 1
+                                              }
+                                            ],
+                            "overlay" : ""
+                          }
+                        ],
+            "settings" : {
+                            "app_folder" : "here",
+                            "app_name" : "00My::App"
+                          }
+          }
+        ]');
+1;
