@@ -26,7 +26,8 @@ choreograph('[
                                                 "static_label" : 0,
                                                 "type" : "text",
                                                 "label" : "Test",
-                                                "max_length" : 0
+                                                "max_length" : 32,
+                                                "mandatory" : 0
                                               },
                                               {
                                                 "inline" : 0,
@@ -35,7 +36,8 @@ choreograph('[
                                                 "static_label" : 0,
                                                 "type" : "email",
                                                 "label" : "Email",
-                                                "max_length" : 0
+                                                "max_length" : 64,
+                                                "mandatory" : 0
                                               },
                                               {
                                                 "inline" : 0,
@@ -47,15 +49,19 @@ choreograph('[
                                                 "static_label" : 0,
                                                 "type" : "radio",
                                                 "label" : "Gender",
-                                                "max_length" : 1
+                                                "mandatory" : 1,
+                                                "max_length" : 16
                                               }
                                             ],
                             "overlay" : ""
                           }
                         ],
             "settings" : {
-                            "app_folder" : "here",
-                            "app_name" : "00My::App"
+                            "app_path" : "/Users/seanzellmer/Apps/Choreographer/",
+                            "app_name" : "My::App",
+                            "write_files" : 1,
+                            "overwrite" : 1,
+                            "module_only": 1
                           }
           }
         ]');
