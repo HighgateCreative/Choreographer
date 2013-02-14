@@ -10,8 +10,9 @@ use strict;
 use warnings;
 
 use Dancer::Choreographer;
+use Term::ANSIColor qw(:constants);
 
-choreograph('[
+my $msgs = choreograph('[
           {
             "models" : [
                           {
@@ -65,4 +66,23 @@ choreograph('[
                           }
           }
         ]');
+
+if (@{ $msgs->{'success'} }) {
+   #print "Success:\n";
+   foreach my $msg ( @{ $msgs->{'success'} } ) {
+      print GREEN, $msg."\n", RESET;
+   }
+}
+if (@{ $msgs->{'errors'} }) {
+   #print "Errors:\n";
+   foreach my $msg ( @{ $msgs->{'errors'} } ) {
+      print RED, $msg."\n", RESET;
+   }
+}
+if (@{ $msgs->{'output'} }) {
+   print "Output:\n";
+   foreach my $msg ( @{ $msgs->{'output'} } ) {
+      print $msg."\n";
+   }
+}
 1;
