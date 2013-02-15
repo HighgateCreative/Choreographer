@@ -15,6 +15,7 @@ $VERSION = 0.100;
 use PPI;
 use JSON;
 use File::Which;
+use File::Path 'mkpath';
 
 use Data::Dumper;
 
@@ -178,7 +179,10 @@ sub create_model_schemas {
       radio          => 'varchar',
    );
 
-   # TODO: check and create folders such as lib/app_name/Schema/Result
+   # Make sure directories exist
+   our_safe_mkdir($app_path."/lib/".$app_name."/");
+   our_safe_mkdir($app_path."/lib/".$app_name."/Schema/");
+   our_safe_mkdir($app_path."/lib/".$app_name."/Schema/Result/");
 
    for my $i ( 0 .. $#$models ) {
       my $result_name = join "_", map {ucfirst} split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
@@ -245,12 +249,11 @@ sub create_model_views {
    # Set return to 1 (success) if writing to files
    my $return = ($write_files && $app_path && $app_name) ? 1 : undef;
 
-   # TODO: Check for general folders like views/models
-
    for my $i ( 0 .. $#$models ) {
       my $model_name = join "_", split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
 
-      # TODO: Check for model specific folder like views/models/artists
+      # Check for model specific folder like views/artists
+      our_safe_mkdir($app_path."/views/".$model_name."/");
 
       my $list_template = create_model_list_view( model => $models->[$i] );
 
@@ -677,5 +680,12 @@ sub write_files {
       print $fh $content;
       close $fh;
    }
+}
+
+sub our_safe_mkdir {
+    my ($dir) = @_;
+    if (not -d $dir) {
+        mkpath $dir or die "could not mkpath $dir: $!";
+    }
 }
 1;
