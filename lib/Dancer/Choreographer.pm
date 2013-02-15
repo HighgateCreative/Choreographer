@@ -180,9 +180,11 @@ sub create_model_schemas {
    );
 
    # Make sure directories exist
-   our_safe_mkdir($app_path."/lib/".$app_name."/");
-   our_safe_mkdir($app_path."/lib/".$app_name."/Schema/");
-   our_safe_mkdir($app_path."/lib/".$app_name."/Schema/Result/");
+   if ($write_files) {
+      our_safe_mkdir($app_path."/lib/".$app_name."/");
+      our_safe_mkdir($app_path."/lib/".$app_name."/Schema/");
+      our_safe_mkdir($app_path."/lib/".$app_name."/Schema/Result/");
+   }
 
    for my $i ( 0 .. $#$models ) {
       my $result_name = join "_", map {ucfirst} split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
@@ -253,7 +255,9 @@ sub create_model_views {
       my $model_name = join "_", split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
 
       # Check for model specific folder like views/artists
-      our_safe_mkdir($app_path."/views/".$model_name."/");
+      if ($write_files) {
+         our_safe_mkdir($app_path."/views/".$model_name."/");
+      }
 
       my $list_template = create_model_list_view( model => $models->[$i] );
 
