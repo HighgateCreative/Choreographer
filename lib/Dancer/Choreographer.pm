@@ -331,7 +331,7 @@ sub create_model_list_view {
   <% ELSE %>
     <p>No results found</p>
   <% END %>
-   <a href='/".$model_name."s/add'>Add a $model->{'readable_name'}</a>&nbsp;<a href='<% dashboard %>'>Dasbhoard</a>
+   <a href='/".$model_name."s/add/'>Add a $model->{'readable_name'}</a>&nbsp;<a href='<% dashboard %>'>Dashboard</a>
 ";
    return $template;
 }
@@ -378,7 +378,7 @@ sub create_model_edit_view {
       # -- Text Area --
       } elsif ($model->{'attributes'}[$i]{'type'} eq 'textarea') {
          $template .= "
-      <textarea name='$model->{'attributes'}[$i]{'label_unreadable'}' id='$model->{'attributes'}[$i]{'label_unreadable'}' class='counter count_down' size='$model->{'attributes'}[$i]{'max_length'}' />
+      <textarea name='$model->{'attributes'}[$i]{'label_unreadable'}' id='$model->{'attributes'}[$i]{'label_unreadable'}' class='counter count_down' size='$model->{'attributes'}[$i]{'max_length'}'></textarea>
       <input type='text' size='4' readonly='readonly' class='counter' value='$model->{'attributes'}[$i]{'max_length'}' />";
       # -- Select --
       } elsif ($model->{'attributes'}[$i]{'type'} eq 'select') {
@@ -540,7 +540,7 @@ use Dancer::Plugin::DBIC;
 use HTML::FillInForm;
 use Data::Dumper;
 use Validate;
-use bookstore::Helpers;
+use Stagehand::Stagehand;
 
 # Setup Models' 'aliases'
 sub $result_name { model('$result_name'); }
