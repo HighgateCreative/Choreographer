@@ -124,20 +124,28 @@ sub create_models {
                         overwrite   => $overwrite,
                      );
    if (ref($views_results) eq 'ARRAY') {
-      push @{ $return->{'success'} }, "Views successfully printed.";
+      push @{ $return->{'success'} }, "View(s) successfully printed.";
       @{ $return->{'output'} } = ( @{$return->{'output'}}, @$views_results );
    } elsif ($views_results) {
-      push @{ $return->{'success'} }, "Views successfully created.";
+      push @{ $return->{'success'} }, "View(s) successfully created.";
    } else {
-      push @{ $return->{'errors'} }, "Creating Views failed.";
+      push @{ $return->{'errors'} }, "Creating View(s) failed.";
    }
 
-   create_model_controllers(  models      => $models,
-                              app_path    => $app_path,
-                              app_name    => $app_name,
-                              write_files => $write_files,
-                              overwrite   => $overwrite,
-                           );
+   my $controller_results = create_model_controllers( models      => $models,
+                                                      app_path    => $app_path,
+                                                      app_name    => $app_name,
+                                                      write_files => $write_files,
+                                                      overwrite   => $overwrite,
+                                                    );
+   if (ref($controller_results) eq 'ARRAY') {
+      push @{ $return->{'success'} }, "Controller(s) successfully printed.";
+      @{ $return->{'output'} } = ( @{$return->{'output'}}, @$controller_results );
+   } elsif ($controller_results) {
+      push @{ $return->{'success'} }, "Controller(s) successfully created.";
+   } else {
+      push @{ $return->{'errors'} }, "Creating Controller(s) failed.";
+   }
 
    return $return;
 }
@@ -504,15 +512,157 @@ sub create_model_controllers {
    my %options = @_;
    my $models = ($options{'models'}) ? $options{'models'} : undef;
    my $app_path = ($options{'app_path'}) ? $options{'app_path'} : undef;
+   my $app_name = ($options{'app_name'}) ? $options{'app_name'} : undef;
    my $write_files = ($options{'write_files'}) ? 1 : 0;
    my $overwrite = ($options{'overwrite'}) ? 1 : 0;
 
    # Errors
    die "Models are required to create model controllers." unless defined $models;
 
+   # Set return to 1 (success) if writing to files
+   my $return = ($write_files && $app_path && $app_name) ? 1 : undef;
+
    for my $i ( 0 .. $#$models ) {
+      my $result_name = join "_", map {ucfirst} split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
+      my $model_name = join "_", split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
+
+      my $route_file =
+"package ".$result_name."s;
+use Dancer ':syntax';
+use Dancer::Plugin::DBIC;
+use HTML::FillInForm;
+use Data::Dumper;
+use Validate;
+use bookstore::Helpers;
+
+# Setup Models' 'aliases'
+sub $result_name { model('$result_name'); }
+
+
+prefix '/".$model_name."s' => sub {
+
+my \%tmpl_params;
+hook 'before' => sub {
+   # Clear tmpl Params;
+   \%tmpl_params = {};
+};
+
+# ==== CRUD =====
+
+# Read
+get '/?:id?' => sub {
+   if ( param 'id' ) {
+      \$tmpl_params{$model_name} = ".$result_name."->find(param 'id');   # \\\@{[ ]} will force a list context
+      template '".$model_name."/".$model_name."_read', \\\%tmpl_params;
+   } else {
+      \$tmpl_params{".$model_name."s} = \\\@{[".$result_name."->all]};   # \\\@{[ ]} will force a list context
+      template '".$model_name."/".$model_name."_list', \\\%tmpl_params;
+   }
+};
+
+# Create and Update
+any ['post', 'put'] => '/?' => sub {
+   set serializer => 'JSON';
+
+   my \%params = params;
+   my \$success;
+
+   my \$msg = validate_".$model_name."s( \\\%params );
+   if (\$msg->{errors}) {
+      return \$msg;
+   }
+   if ( request->method() eq 'POST' ) {
+      #delete \$params{'id'};
+      ".$result_name."->create(\$msg);
+      \$success = \"$models->[$i]{'table_name'} added Successfully\";
+   } else {
+      ".$result_name."->find(param 'id')->update(\$msg);
+      \$success = \"$models->[$i]{'table_name'} updated Successfully\";
+   }
+   return { success => [ { success => \$success } ] };
+};
+# Delete
+get '/delete/:id' => sub {
+   ".$result_name."->find(param 'id')->delete();
+   redirect '/".$model_name."s/';
+};
+del '/:id' => sub {
+   ".$result_name."->find(param 'id')->delete();
+   redirect '/".$model_name."s/';
+};
+
+# ---- Views -----
+
+get '/add/?' => sub {
+	template '".$model_name."/".$model_name."_edit', \\\%tmpl_params;
+};
+
+get '/edit/:id' => sub {
+   if (param 'id') { \$tmpl_params{$model_name} = ".$result_name."->find(param 'id'); }
+   %tmpl_params = (%tmpl_params, %{".$result_name."->search({ id => param 'id' }, {
+      result_class => 'DBIx::Class::ResultClass::HashRefInflator',
+   })->next});
+	fillinform('$model_name/".$model_name."_edit', \\%tmpl_params);
+};
+
+}; # End prefix
+
+# ===== Helper Functions =====
+
+#--- Validate -------------------------------------------------------------  
+sub validate_".$model_name."s {
+   my \$params = shift;
+	my (%sql, \$error, \@error_list, \$stmt);
+	";
+
+   for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
+      if ($models->[$i]{'attributes'}[$j]{'type'} eq 'email') {
+         $route_file .= "
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_email( $models->[$i]{'attributes'}[$j]{'mandatory'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
+      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'checkbox') {
+         $route_file .= "
+	\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = (\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) ? 1 : 0;";
+      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'radio' or $models->[$i]{'attributes'}[$j]{'type'} eq 'select') {
+         if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
+            $route_file .= "
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_selected( \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
+         } else {
+            $route_file .= "
+	\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'};";
+         }
+      } else {
+         $route_file .= "
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_text( $models->[$i]{'attributes'}[$j]{'mandatory'}, $models->[$i]{'attributes'}[$j]{'max_length'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
+      }
+   }
+   $route_file .= "
+
+	for my \$key ( keys %sql ) {
+		if (not \$sql{\$key}) { \$sql{\$key} = ''; } # Set all undefined variables to avoid warnings.
+	}
+	if (\@error_list) {
+      return { 'errors' => \\\@error_list };
+   }
+	return \\%sql;
+}
+
+1;
+";
+      if ( $write_files && $app_path && $app_name && $route_file ) {
+         $app_name =~ s{::}{/}g; # Convert app name to file path
+         if ( not write_files($app_path."/lib/".$result_name.".pm", $route_file, $overwrite) ) {
+            $return = 0;
+         }
+      } else {
+         push @$return, $route_file;
+      }
       
    }
+   return $return;
 }
 
 sub write_files {
