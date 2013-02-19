@@ -177,6 +177,7 @@ sub create_model_schemas {
       tinymce        => 'text',
       sessionvarible => 'integer',
       radio          => 'varchar',
+      file           => 'varchar',
    );
 
    # Make sure directories exist
@@ -208,10 +209,14 @@ __PACKAGE__->add_columns(
       # Loop through model attributes adding column info
       for my $j ( 0 .. $#{ $models->[$i]{'attributes'} } ) {
          my $data_type = $data_types{ $models->[$i]{'attributes'}[$j]{'type'} };
+         my $size = $models->[$i]{'attributes'}[$j]{'max_length'};
+         if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+            $size = 255;
+         }
          $schema .=
 "   '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => {
       data_type => '$data_type',
-      size => '$models->[$i]{'attributes'}[$j]{'max_length'}',
+      size => '$size',
    },
 ";
       }
@@ -320,9 +325,15 @@ sub create_model_list_view {
          <td><a href='/".$model_name."s/<% $model_name.id %>'>View</a> <a href='/".$model_name."s/edit/<% $model_name.id %>'>Edit</a></td>
 ";
    for my $i ( 0 .. $#{$model->{'attributes'}} ) {
-      $template .=
-"         <td><% $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %></td>
-";
+      if ($model->{'attributes'}[$i]{'type'} eq 'file') {
+         $template .=
+   "         <td><% IF $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %><a href='<% request.uri_base %>/documents/<% $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>'>Download</a><% END %></td>
+   ";
+      } else {
+         $template .=
+   "         <td><% $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %></td>
+   ";
+      }
    }
    $template .=
 "      </tr>
@@ -348,7 +359,7 @@ sub create_model_edit_view {
 
    my $template_whole =
 "<div id='msgs'></div>
-<form id='".$model_name."_form' action='/".$model_name."s' method=''>
+<form id='".$model_name."_form' action='/".$model_name."s' enctype='multipart/form-data' method=''>
    <input type='hidden' name='id' value='' />";
    for my $i ( 0 .. $#{$model->{'attributes'}} ) {
       my @label_classes;
@@ -408,11 +419,11 @@ sub create_model_edit_view {
       # -- File Uploads --
       } elsif ($model->{'attributes'}[$i]{'type'} eq 'file') {
          $template = "
-            <!-- add to form tag:  enctype='multipart/form-data'-->
+      <!-- add to form tag:  enctype='multipart/form-data'-->
       <% IF $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>
          <p class='wrap'>
-            <label for='server_image' class='label'>Existing</label>
-            <input type='text' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' id='$model->{'attributes'}[$i]{'label_unreadable'}' readonly='readonly' /> OR...
+            <label for='server_$model->{'attributes'}[$i]{'label_unreadable'}' class='label'>Existing</label>
+            <input type='text' name='server_$model->{'attributes'}[$i]{'label_unreadable'}' value='' id='server_$model->{'attributes'}[$i]{'label_unreadable'}' readonly='readonly' /> OR...
          </p>
       <% END %>" . $template;
          $template .= "
@@ -441,7 +452,7 @@ sub create_model_edit_view {
 <script type='text/javascript'>
    \$(function() {
       \$('#".$model_name."_form').ajaxForm({
-         url: '/".$model_name."s',
+         url: '/".$model_name."s<% IF $model_name.id %>/put<% END %>',
          type: '<% IF $model_name.id %>PUT<% ELSE %>POST<% END %>',
          datatype: 'json',
          beforeSubmit: function() {
@@ -490,16 +501,10 @@ sub create_model_read_view {
       <% IF $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>Yes<% ELSE %>No<% END %>";
       # -- File Uploads --
       } elsif ($model->{'attributes'}[$i]{'type'} eq 'file') {
-         $template = "
-            <!-- add to form tag:  enctype='multipart/form-data'-->
-      <% IF $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>
-         <p class='wrap'>
-            <label for='server_image' class='label'>Existing</label>
-            <input type='text' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' id='$model->{'attributes'}[$i]{'label_unreadable'}' readonly='readonly' /> OR...
-         </p>
-      <% END %>" . $template;
          $template .= "
-      <a href='/documents/<% $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>'>Download</a>";      
+      <% IF $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>
+      <a href='<% request.uri_base %>/documents/<% $model_name.$model->{'attributes'}[$i]{'label_unreadable'} %>'>Download</a>
+      <% END %>";
       # -- Everything else --
       } else {
          $template .= "
@@ -568,7 +573,7 @@ get '/?:id?' => sub {
 };
 
 # Create and Update
-any ['post', 'put'] => '/?' => sub {
+any ['post', 'put'] => '/?:method?' => sub {
    set serializer => 'JSON';
 
    my \%params = params;
@@ -578,7 +583,7 @@ any ['post', 'put'] => '/?' => sub {
    if (\$msg->{errors}) {
       return \$msg;
    }
-   if ( request->method() eq 'POST' ) {
+   if ( request->method() eq 'POST' and param 'method' ne 'put' ) {
       #delete \$params{'id'};
       ".$result_name."->create(\$msg);
       \$success = \"$models->[$i]{'table_name'} added Successfully\";
@@ -608,7 +613,14 @@ get '/edit/:id' => sub {
    if (param 'id') { \$tmpl_params{$model_name} = ".$result_name."->find(param 'id'); }
    %tmpl_params = (%tmpl_params, %{".$result_name."->search({ id => param 'id' }, {
       result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-   })->next});
+   })->next});";
+   for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
+      if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+         $route_file .= "
+   \$tmpl_params{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = \$tmpl_params{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'};";
+      }
+   }
+   $route_file .= "
 	fillinform('$model_name/".$model_name."_edit', \\%tmpl_params);
 };
 
@@ -631,6 +643,39 @@ sub validate_".$model_name."s {
          $route_file .= "
 	\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = (\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) ? 1 : 0;";
       } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+         $route_file .= "
+      my \$upload_dir = './public/documents';  #relative to where the calling instance script is
+      my \$max = $models->[$i]{'attributes'}[$j]{'max_length'}000;                       #upload_is the main path, \$sub_dir is an option new directory that will 
+        #my \$endings = 'jpg|gif';                    # that will be created below and appended to \$updir
+                                                      # don't forget: enctype='multipart/form-data'";
+      # A filename is only valid if there is no server version
+      if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
+         $route_file .= "
+      my \$mand = 1;
+      if ( \$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} ) {
+         \$mand = 0;
+      }";
+      } else {
+         $route_file .= "
+      my \$mand = 0;";
+      }
+      $route_file .= "
+      (my \$new_file_to_upload, \$error) = Validate::val_filename( \$mand, undef ,\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'});   
+      if ( \$error-> { msg } ) { 
+         push \@error_list, { '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => \$error->{ msg } }; 
+      } elsif (\$new_file_to_upload) {
+         (\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}' }, my \$uploaderror, my \$size) = 
+            upload_file(upload('$models->[$i]{'attributes'}[$j]{'label_unreadable'}'), \$max, \$upload_dir, '', \$new_file_to_upload );
+         if (\$uploaderror) { 
+            push \@error_list, { '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => \$uploaderror }; 
+         } 
+         #\$sql{'thumb_name'} = \$self->resize_image( 95,\$sql{'image_name'}, 'jpeg', '_thumb.jpg', \$upload_dir );  #\$thumbsize, \$image_name, \$file_type, \$file_exten, \$where
+      } elsif (\$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) {       
+         \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = \$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'};
+      } 
+      if (not \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) { \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = ''; }   # To prevent warnings down the line. SZ
+   #}";
+
       } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'radio' or $models->[$i]{'attributes'}[$j]{'type'} eq 'select') {
          if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
             $route_file .= "
