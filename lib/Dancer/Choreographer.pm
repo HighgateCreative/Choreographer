@@ -9,7 +9,7 @@ use vars qw($VERSION @ISA @EXPORT @EXPORT_OK);
 
 $VERSION = 0.100;
 @ISA = qw(Exporter);
-@EXPORT = qw(choreograph);
+@EXPORT = qw(setting_the_stage choreograph);
 @EXPORT_OK = qw(setup);
 
 use PPI;
@@ -22,7 +22,7 @@ use Data::Dumper;
 #print Dumper(\%Config);
 #use lib $Config{INSTALLSCRIPT};
 
-sub setup {
+sub setting_the_stage {
    my $dancer_cmd_path;
    unless ($dancer_cmd_path = which('dancer')) {
       die "No dancer command was found. Install Dancer from CPAN with 'curl -L http://cpanmin.us | perl - --sudo Dancer'";
@@ -42,8 +42,6 @@ sub setup {
 sub choreograph {
    my $json = shift;
    my $params = from_json($json);
-
-   setup();
 
    my $return;
    
@@ -78,6 +76,9 @@ sub model_preprocessing {
          my $unreadable_label = lc $models->[$i]{'attributes'}[$j]{'label'};
          $unreadable_label =~ s/ /_/g;
          $models->[$i]{'attributes'}[$j]{'label_unreadable'} = $unreadable_label;
+         if ($models->[$i]{'attributes'}[$j]{'type'} eq 'tinymce') {
+            $models->[$i]{'has_tinymce'} = 1;
+         }
       }
    }
 
@@ -115,7 +116,7 @@ sub create_models {
    } elsif ($schema_result) {
       push @{ $return->{'success'} }, "Schema(s) successfully created.";
    } else {
-      push @{ $return->{'errors'} }, "Creating Schema(s) failed.";
+      push @{ $return->{'errors'} }, { generic => "Creating Schema(s) failed." };
    }
 
    my $views_results = create_model_views(  models      => $models,
@@ -130,7 +131,7 @@ sub create_models {
    } elsif ($views_results) {
       push @{ $return->{'success'} }, "View(s) successfully created.";
    } else {
-      push @{ $return->{'errors'} }, "Creating View(s) failed.";
+      push @{ $return->{'errors'} }, { generic => "Creating View(s) failed." };
    }
 
    my $controller_results = create_model_controllers( models      => $models,
@@ -145,7 +146,7 @@ sub create_models {
    } elsif ($controller_results) {
       push @{ $return->{'success'} }, "Controller(s) successfully created.";
    } else {
-      push @{ $return->{'errors'} }, "Creating Controller(s) failed.";
+      push @{ $return->{'errors'} }, { generic => "Creating Controller(s) failed." };
    }
 
    return $return;
@@ -216,7 +217,12 @@ __PACKAGE__->add_columns(
          $schema .=
 "   '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => {
       data_type => '$data_type',
-      size => '$size',
+      size => '$size',";
+         if ($models->[$i]{'attributes'}[$j]{'type'} eq 'checkbox') {
+            $schema .= "
+            default_value => 0,";
+         }
+         $schema .= "
    },
 ";
       }
@@ -387,9 +393,13 @@ sub create_model_edit_view {
       <input type='email' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' maxlength='$model->{'attributes'}[$i]{'max_length'}' />";
 
       # -- Text Area --
-      } elsif ($model->{'attributes'}[$i]{'type'} eq 'textarea') {
+      } elsif ($model->{'attributes'}[$i]{'type'} eq 'textarea' or $model->{'attributes'}[$i]{'type'} eq 'tinymce') {
+         my $input_class = '';
+         if ($model->{'attributes'}[$i]{'type'} eq 'tinymce') {
+            $input_class .= ' tinymce';
+         }
          $template .= "
-      <textarea name='$model->{'attributes'}[$i]{'label_unreadable'}' id='$model->{'attributes'}[$i]{'label_unreadable'}' class='counter count_down' size='$model->{'attributes'}[$i]{'max_length'}'></textarea>
+      <textarea name='$model->{'attributes'}[$i]{'label_unreadable'}' id='$model->{'attributes'}[$i]{'label_unreadable'}' class='counter count_down$input_class' size='$model->{'attributes'}[$i]{'max_length'}'></textarea>
       <input type='text' size='4' readonly='readonly' class='counter' value='$model->{'attributes'}[$i]{'max_length'}' />";
       # -- Select --
       } elsif ($model->{'attributes'}[$i]{'type'} eq 'select') {
@@ -450,7 +460,23 @@ sub create_model_edit_view {
    </p>
 </form>
 <script type='text/javascript'>
-   \$(function() {
+   \$(function() {";
+   if ($model->{'has_tinymce'}) {
+      $template_whole .= "
+      \$('textarea.tinymce').tinymce({
+         script_url : '/xm_js/tiny_mce/tiny_mce.js',
+         theme : 'advanced',
+         theme_advanced_disable : 'underline,strikethrough,justifyright,justifyfull,styleselect,formatselect,numlist,outdent,indent,anchor,image,cleanup,help,hr,removeformat,visualaid,sub,sup,',
+         theme_advanced_buttons1 : 'bold,italic,|,justifyleft,justifycenter,bullist,|,undo,redo,|,link,unlink,|,code,charmap',
+         theme_advanced_buttons2 : '',
+         theme_advanced_buttons3 : '',
+         content_css : '/xm_client/forms.css',
+         width : '400',
+         height : '200'
+         //theme_advanced_toolbar_location : 'top'
+      });";
+   }
+   $template_whole .= "
       \$('#".$model_name."_form').ajaxForm({
          url: '/".$model_name."s<% IF $model_name.id %>/put<% END %>',
          type: '<% IF $model_name.id %>PUT<% ELSE %>POST<% END %>',
@@ -473,6 +499,12 @@ sub create_model_edit_view {
    });
 </script>
 ";
+
+   # Additional Scripts
+   if ($model->{'has_tinymce'}) {
+      $template_whole .= "
+   <script src='<% request.uri_base %>/javascripts/tiny_mce/jquery.tiny_mce.js' type='text/javascript'></script>";
+   }
    return $template_whole;
 }
 
@@ -694,7 +726,7 @@ sub validate_".$model_name."s {
    $route_file .= "
 
 	for my \$key ( keys %sql ) {
-		if (not \$sql{\$key}) { \$sql{\$key} = ''; } # Set all undefined variables to avoid warnings.
+		if (not defined \$sql{\$key}) { \$sql{\$key} = ''; } # Set all undefined variables to avoid warnings.
 	}
 	if (\@error_list) {
       return { 'errors' => \\\@error_list };
