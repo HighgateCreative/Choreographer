@@ -481,13 +481,13 @@ sub create_model_edit_view {
    if ($model->{'has_tinymce'}) {
       $template_whole .= "
       \$('textarea.tinymce').tinymce({
-         script_url : '/xm_js/tiny_mce/tiny_mce.js',
+         script_url : '/javascripts/tiny_mce/tiny_mce.js',
          theme : 'advanced',
          theme_advanced_disable : 'underline,strikethrough,justifyright,justifyfull,styleselect,formatselect,numlist,outdent,indent,anchor,image,cleanup,help,hr,removeformat,visualaid,sub,sup,',
          theme_advanced_buttons1 : 'bold,italic,|,justifyleft,justifycenter,bullist,|,undo,redo,|,link,unlink,|,code,charmap',
          theme_advanced_buttons2 : '',
          theme_advanced_buttons3 : '',
-         content_css : '/xm_client/forms.css',
+         content_css : '/css/form.css',
          width : '400',
          height : '200'
          //theme_advanced_toolbar_location : 'top'
@@ -520,7 +520,7 @@ sub create_model_edit_view {
    # Additional Scripts
    if ($model->{'has_tinymce'}) {
       $template_whole .= "
-   <script src='<% request.uri_base %>/javascripts/tiny_mce/jquery.tiny_mce.js' type='text/javascript'></script>";
+   <script src='<% request.uri_base %>/javascripts/tiny_mce/jquery.tinymce.js' type='text/javascript'></script>";
    }
    return $template_whole;
 }
