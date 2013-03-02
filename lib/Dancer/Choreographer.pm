@@ -49,8 +49,25 @@ sub choreograph {
       if (eval "validate_app_name(\$params->[\$i]{'settings'}{'app_name'});") {
          die "Try a new app name.";
       }
+
       # Check if working with a module only or not
       if ($params->[$i]{'settings'}{'module_only'}) {
+			   # Check to see if Schema has been created
+		     our_safe_mkdir($params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/");
+				 write_files( $params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/Schema.pm",
+"package $params->[$i]{'settings'}{'app_name'}::Schema;
+
+use strict;
+use warnings;
+
+use base 'DBIx::Class::Schema';
+
+our \$VERSION = 1;
+
+__PACKAGE__->load_namespaces;
+
+1;");
+
          my $msgs = create_models(  models      => $params->[$i]{'models'},
                                     app_name    => $params->[$i]{'settings'}{'app_name'},
                                     app_path    => $params->[$i]{'settings'}{'app_path'},
