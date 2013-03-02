@@ -593,7 +593,7 @@ use Dancer ':syntax';
 use Dancer::Plugin::DBIC;
 use HTML::FillInForm;
 use Data::Dumper;
-use Validate;
+use Validate::Validate;
 use Stagehand::Stagehand;
 
 # Setup Models' 'aliases'
@@ -686,7 +686,7 @@ sub validate_".$model_name."s {
    for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
       if ($models->[$i]{'attributes'}[$j]{'type'} eq 'email') {
          $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_email( $models->[$i]{'attributes'}[$j]{'mandatory'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_email( $models->[$i]{'attributes'}[$j]{'mandatory'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
 		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
       } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'checkbox') {
          $route_file .= "
@@ -709,7 +709,7 @@ sub validate_".$model_name."s {
       my \$mand = 0;";
       }
       $route_file .= "
-      (my \$new_file_to_upload, \$error) = Validate::val_filename( \$mand, undef ,\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'});   
+      (my \$new_file_to_upload, \$error) = Validate::Validate::val_filename( \$mand, undef ,\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'});   
       if ( \$error-> { msg } ) { 
          push \@error_list, { '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => \$error->{ msg } }; 
       } elsif (\$new_file_to_upload) {
@@ -728,7 +728,7 @@ sub validate_".$model_name."s {
       } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'radio' or $models->[$i]{'attributes'}[$j]{'type'} eq 'select') {
          if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
             $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_selected( \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_selected( \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
 		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
          } else {
             $route_file .= "
@@ -736,7 +736,7 @@ sub validate_".$model_name."s {
          }
       } else {
          $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::val_text( $models->[$i]{'attributes'}[$j]{'mandatory'}, $models->[$i]{'attributes'}[$j]{'max_length'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
+	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_text( $models->[$i]{'attributes'}[$j]{'mandatory'}, $models->[$i]{'attributes'}[$j]{'max_length'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
 		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
       }
    }
