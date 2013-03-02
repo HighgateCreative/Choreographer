@@ -632,7 +632,7 @@ any ['post', 'put'] => '/?:method?' => sub {
    if (\$msg->{errors}) {
       return \$msg;
    }
-   if ( request->method() eq 'POST' and param 'method' ne 'put' ) {
+   if ( request->method() eq 'POST' and ( not ( defined \$params{'method'} ) or \$params{'method'} ne 'put' ) ) {
       #delete \$params{'id'};
       ".$result_name."->create(\$msg);
       \$success = \"$models->[$i]{'table_name'} added Successfully\";
