@@ -478,6 +478,10 @@ sub create_model_edit_view {
 </form>
 <script type='text/javascript'>
    \$(function() {";
+   if ($model->{'date_picker'}) {
+      $template_whole .= "
+      \$('.date_picker').datepicker( { dateFormat: \"mm-dd-yy\" } );";
+   }
    if ($model->{'has_tinymce'}) {
       $template_whole .= "
       \$('textarea.tinymce').tinymce({
@@ -521,6 +525,12 @@ sub create_model_edit_view {
    if ($model->{'has_tinymce'}) {
       $template_whole .= "
    <script src='<% request.uri_base %>/javascripts/tiny_mce/jquery.tinymce.js' type='text/javascript'></script>";
+   }
+
+   # Additional Scripts
+   if ($model->{'date_picker'}) {
+      $template_whole .= "
+   <script src='/xm_js/jquery-ui-1.8.11.custom.min.js' type='text/javascript'></script>";
    }
    return $template_whole;
 }
