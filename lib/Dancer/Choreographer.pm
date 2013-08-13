@@ -73,6 +73,7 @@ __PACKAGE__->load_namespaces;
                                     app_path    => $params->[$i]{'settings'}{'app_path'},
                                     write_files => $params->[$i]{'settings'}{'write_files'},
                                     overwrite   => $params->[$i]{'settings'}{'overwrite'},
+                                    json        => $json,
                                  );
          $return = $msgs;
       } else {
@@ -109,6 +110,7 @@ sub create_models {
    my $models = ($options{'models'}) ? $options{'models'} : undef;
    my $app_path = ($options{'app_path'}) ? $options{'app_path'} : undef;
    my $app_name = ($options{'app_name'}) ? $options{'app_name'} : undef;
+   my $json = ($options{'json'}) ? $options{'json'} : undef;
    my $write_files = ($options{'write_files'}) ? 1 : 0;
    my $overwrite = ($options{'overwrite'}) ? 1 : 0;
 
@@ -156,6 +158,7 @@ sub create_models {
                                                       app_name    => $app_name,
                                                       write_files => $write_files,
                                                       overwrite   => $overwrite,
+                                                      json        => $json,
                                                     );
    if (ref($controller_results) eq 'ARRAY') {
       push @{ $return->{'success'} }, "Controller(s) successfully printed.";
@@ -597,6 +600,7 @@ sub create_model_controllers {
    my $models = ($options{'models'}) ? $options{'models'} : undef;
    my $app_path = ($options{'app_path'}) ? $options{'app_path'} : undef;
    my $app_name = ($options{'app_name'}) ? $options{'app_name'} : undef;
+   my $json = ($options{'json'}) ? $options{'json'} : undef;
    my $write_files = ($options{'write_files'}) ? 1 : 0;
    my $overwrite = ($options{'overwrite'}) ? 1 : 0;
 
@@ -714,6 +718,10 @@ get '/edit/:id' => sub {
 }; # End prefix
 1;
 ";
+
+      # If original json give, append
+      $route_file .= "\n__END__\n# The original json used to create this Model:\n".$json if $json;
+
       if ( $write_files && $app_path && $app_name && $route_file ) {
          $app_name =~ s{::}{/}g; # Convert app name to file path
          if ( not write_files($app_path."/lib/".$result_name.".pm", $route_file, $overwrite) ) {
