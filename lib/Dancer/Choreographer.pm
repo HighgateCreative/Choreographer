@@ -217,6 +217,8 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
+__PACKAGE__->load_components(qw/Validation::DBStruct/);
+
 __PACKAGE__->table('$models->[$i]{'table_name'}');
 __PACKAGE__->add_columns(
    'id' => {
@@ -235,9 +237,20 @@ __PACKAGE__->add_columns(
 "   '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => {
       data_type => '$data_type',
       size => '$size',";
+         if ( not $models->[$i]{'attributes'}[$j]{'mandatory'} ) {
+            $schema .= "
+      is_nullable => 1,";
+         }
+         if ($models->[$i]{'attributes'}[$j]{'type'} eq 'email') {
+            $schema .= "
+      val_override => 'email',";
+         } elsif ( ( $models->[$i]{'attributes'}[$j]{'type'} eq 'radio' or $models->[$i]{'attributes'}[$j]{'type'} eq 'select' ) and $models->[$i]{'attributes'}[$j]{'mandatory'} ) {
+            $schema .= "
+      val_override => 'selected',";
+         }
          if ($models->[$i]{'attributes'}[$j]{'type'} eq 'checkbox') {
             $schema .= "
-            default_value => 0,";
+      default_value => 0,";
          }
          $schema .= "
    },
@@ -631,27 +644,42 @@ get '/?:id?' => sub {
    }
 };
 
-# Create and Update
-any ['post', 'put'] => '/?:method?' => sub {
+# Create
+post '/?:id?' => sub {
    set serializer => 'JSON';
 
    my \%params = params;
    my \$success;
 
-   my \$msg = validate_".$model_name."s( \\\%params );
-   if (\$msg->{errors}) {
-      return \$msg;
+   my \$result = ".$result_name."->create( \\\%params );
+   if (\$result->{errors}) {
+      return \$result;
    }
-   if ( request->method() eq 'POST' and ( not ( defined \$params{'method'} ) or \$params{'method'} ne 'put' ) ) {
-      #delete \$params{'id'};
-      ".$result_name."->create(\$msg);
-      \$success = \"$models->[$i]{'table_name'} added Successfully\";
-   } else {
-      ".$result_name."->find(param 'id')->update(\$msg);
-      \$success = \"$models->[$i]{'table_name'} updated Successfully\";
-   }
+   \$success = \"$models->[$i]{'table_name'} added Successfully\";
    return { success => [ { success => \$success } ] };
 };
+
+# Update
+put '/?:id?' => sub {
+   return put_cntrl();
+};
+post '/put/?:id?' => sub {
+   return put_cntrl();
+};
+sub put_cntrl {
+   set serializer => 'JSON';
+
+   my \%params = params;
+   my \$success;
+
+   my \$result = ".$result_name."->find(param 'id')->update( \\\%params );
+   if (\$result->{errors}) {
+      return \$result;
+   }
+   \$success = \"$models->[$i]{'table_name'} updated Successfully\";
+   return { success => [ { success => \$success } ] };
+}
+
 # Delete
 get '/delete/:id' => sub {
    ".$result_name."->find(param 'id')->delete();
@@ -684,83 +712,6 @@ get '/edit/:id' => sub {
 };
 
 }; # End prefix
-
-# ===== Helper Functions =====
-
-#--- Validate -------------------------------------------------------------  
-sub validate_".$model_name."s {
-   my \$params = shift;
-	my (%sql, \$error, \@error_list, \$stmt);
-	";
-
-   for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
-      if ($models->[$i]{'attributes'}[$j]{'type'} eq 'email') {
-         $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_email( $models->[$i]{'attributes'}[$j]{'mandatory'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
-		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
-      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'checkbox') {
-         $route_file .= "
-	\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = (\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) ? 1 : 0;";
-      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
-         $route_file .= "
-      my \$upload_dir = './public/documents';  #relative to where the calling instance script is
-      my \$max = $models->[$i]{'attributes'}[$j]{'max_length'}000;                       #upload_is the main path, \$sub_dir is an option new directory that will 
-        #my \$endings = 'jpg|gif';                    # that will be created below and appended to \$updir
-                                                      # don't forget: enctype='multipart/form-data'";
-      # A filename is only valid if there is no server version
-      if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
-         $route_file .= "
-      my \$mand = 1;
-      if ( \$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} ) {
-         \$mand = 0;
-      }";
-      } else {
-         $route_file .= "
-      my \$mand = 0;";
-      }
-      $route_file .= "
-      (my \$new_file_to_upload, \$error) = Validate::Validate::val_filename( \$mand, undef ,\$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'});   
-      if ( \$error-> { msg } ) { 
-         push \@error_list, { '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => \$error->{ msg } }; 
-      } elsif (\$new_file_to_upload) {
-         (\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}' }, my \$uploaderror, my \$size) = 
-            upload_file(upload('$models->[$i]{'attributes'}[$j]{'label_unreadable'}'), \$max, \$upload_dir, '', \$new_file_to_upload );
-         if (\$uploaderror) { 
-            push \@error_list, { '$models->[$i]{'attributes'}[$j]{'label_unreadable'}' => \$uploaderror }; 
-         } 
-         #\$sql{'thumb_name'} = \$self->resize_image( 95,\$sql{'image_name'}, 'jpeg', '_thumb.jpg', \$upload_dir );  #\$thumbsize, \$image_name, \$file_type, \$file_exten, \$where
-      } elsif (\$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) {       
-         \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = \$params->{'server_$models->[$i]{'attributes'}[$j]{'label_unreadable'}'};
-      } 
-      if (not \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}) { \$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = ''; }   # To prevent warnings down the line. SZ
-   #}";
-
-      } elsif ($models->[$i]{'attributes'}[$j]{'type'} eq 'radio' or $models->[$i]{'attributes'}[$j]{'type'} eq 'select') {
-         if ($models->[$i]{'attributes'}[$j]{'mandatory'}) {
-            $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_selected( \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
-		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
-         } else {
-            $route_file .= "
-	\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} = \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'};";
-         }
-      } else {
-         $route_file .= "
-	(\$sql{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'}, \$error) = Validate::Validate::val_text( $models->[$i]{'attributes'}[$j]{'mandatory'}, $models->[$i]{'attributes'}[$j]{'max_length'}, \$params->{'$models->[$i]{'attributes'}[$j]{'label_unreadable'}'} );
-		if ( \$error-> { msg } ) { push \@error_list, { \"$models->[$i]{'attributes'}[$j]{'label_unreadable'}\" => \$error->{ msg } }; }";
-      }
-   }
-   $route_file .= "
-
-	for my \$key ( keys %sql ) {
-		if (not defined \$sql{\$key}) { \$sql{\$key} = ''; } # Set all undefined variables to avoid warnings.
-	}
-	if (\@error_list) {
-      return { 'errors' => \\\@error_list };
-   }
-	return \\%sql;
-}
-
 1;
 ";
       if ( $write_files && $app_path && $app_name && $route_file ) {
