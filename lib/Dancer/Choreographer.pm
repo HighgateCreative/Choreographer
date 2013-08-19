@@ -632,7 +632,7 @@ prefix '/".$model_name."s' => sub {
 my \%tmpl_params;
 hook 'before' => sub {
    # Clear tmpl Params;
-   \%tmpl_params = {};
+   \%tmpl_params = ();
 };
 
 # ==== CRUD =====
