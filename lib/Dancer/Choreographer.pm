@@ -381,7 +381,8 @@ sub create_model_list_view {
   <% ELSE %>
     <p>No results found</p>
   <% END %>
-   <a href='/".$model_name."s/add/'>Add a $model->{'readable_name'}</a>&nbsp;<a href='<% dashboard %>'>Dashboard</a>
+   <a class='button' href='/".$model_name."s/add/'>Add a $model->{'readable_name'}</a>
+   &nbsp;&nbsp;<a href='<% dashboard %>'>Dashboard</a>
 ";
    return $template;
 }
@@ -487,9 +488,9 @@ sub create_model_edit_view {
    }
    $template_whole .= "
    <p>
-      <input type='submit' value='<% IF ".$model_name.".id %>Update<% ELSE %>Save<% END %>' />
-      <% IF ".$model_name.".id %><a href='/".$model_name."s/delete/<% ".$model_name.".id %>'>Delete</a><% END %>
-      <a href='/".$model_name."s/'>Back to List</a>
+      <input class='button' type='submit' value='<% IF ".$model_name.".id %>Update<% ELSE %>Save<% END %>' />
+      &nbsp;<% IF ".$model_name.".id %>&nbsp;<a href='/".$model_name."s/delete/<% ".$model_name.".id %>'>Delete</a>&nbsp;|<% END %>
+      &nbsp;<a href='/".$model_name."s/'>Back to List</a>
    </p>
 </form>
 <script type='text/javascript'>
