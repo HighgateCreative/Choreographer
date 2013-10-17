@@ -220,7 +220,7 @@ use warnings;
 
 use base 'DBIx::Class::Core';
 
-__PACKAGE__->load_components(qw/Validation::DBStruct/);
+__PACKAGE__->load_components(qw/Validation::Structure/);
 
 __PACKAGE__->table('$models->[$i]{'table_name'}');
 __PACKAGE__->add_columns(
