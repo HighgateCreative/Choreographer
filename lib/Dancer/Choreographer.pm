@@ -616,12 +616,11 @@ sub create_model_controllers {
       my $model_name = join "_", split / /, $models->[$i]{'table_name'}; #Uppercase first letter of every word and replace spaces with underscores.
 
       my $route_file =
-"package ".$result_name."s;
+"package ".$result_name.";
 use Dancer ':syntax';
 use Dancer::Plugin::DBIC;
 use HTML::FillInForm;
 use Data::Dumper;
-use Validate::Validate;
 use Stagehand::Stagehand;
 
 # Setup Models' 'aliases'
