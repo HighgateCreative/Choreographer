@@ -473,9 +473,12 @@ sub create_model_edit_view {
          $template .= "
       <input type='file' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' id='$model->{'attributes'}[$i]{'label_unreadable'}' /><!-- don't forget: enctype='multipart/form-data' -->";      
       # -- Datepicker --
-      } elsif ($model->{'attributes'}[$i]{'type'} eq 'date_picker') {
+      } elsif ($model->{'attributes'}[$i]{'type'} eq 'datepicker') {
          $template .= "
-      <input type='text' class='date_picker' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' maxlength='$model->{'attributes'}[$i]{'max_length'}' />";
+      <input type='text' class='datepicker' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' maxlength='$model->{'attributes'}[$i]{'max_length'}' />";
+
+         # Flag that the model has a datepicker
+         $model->{datepicker} = 1;
       # -- Text field --
       } else {
          $template .= "
@@ -495,9 +498,9 @@ sub create_model_edit_view {
 </form>
 <script type='text/javascript'>
    \$(function() {";
-   if ($model->{'date_picker'}) {
+   if ($model->{'datepicker'}) {
       $template_whole .= "
-      \$('.date_picker').datepicker( { dateFormat: \"mm-dd-yy\" } );";
+      \$('.datepicker').datepicker( { dateFormat: \"mm-dd-yy\" } );";
    }
    if ($model->{'has_tinymce'}) {
       $template_whole .= "
@@ -545,9 +548,10 @@ sub create_model_edit_view {
    }
 
    # Additional Scripts
-   if ($model->{'date_picker'}) {
+   if ($model->{'datepicker'}) {
       $template_whole .= "
-   <script src='/xm_js/jquery-ui-1.8.11.custom.min.js' type='text/javascript'></script>";
+   <script src=\"//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/jquery-ui.min.js\"></script>
+   <link rel=\"stylesheet\" href=\"//ajax.googleapis.com/ajax/libs/jqueryui/1.10.3/themes/ui-lightness/jquery-ui.min.css\" />";
    }
    return $template_whole;
 }
