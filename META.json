@@ -36,16 +36,26 @@
       },
       "runtime" : {
          "requires" : {
-            "perl" : "5.008005"
-         }
-      },
-      "test" : {
-         "requires" : {
-            "Test::More" : "0.88"
+            "Dancer" : "0",
+            "File::Path" : "0",
+            "File::Which" : "0",
+            "JSON" : "0",
+            "PPI" : "0"
          }
       }
    },
    "release_status" : "stable",
+   "resources" : {
+      "bugtracker" : {
+         "web" : "https://github.com/HighgateCross/Choreographer/issues"
+      },
+      "homepage" : "https://github.com/HighgateCross/Choreographer",
+      "repository" : {
+         "type" : "git",
+         "url" : "https://github.com/HighgateCross/Choreographer.git",
+         "web" : "https://github.com/HighgateCross/Choreographer"
+      }
+   },
    "version" : "0.01"
 }
 
