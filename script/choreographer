@@ -9,56 +9,45 @@ use lib 'lib';
 use strict;
 use warnings;
 
-use Dancer::Choreographer;
-use Term::ANSIColor qw(:constants);
-use Getopt::Long;
+use 5.008001;
+use Dancer::Choreographer::CLI;
 
-Getopt::Long::Configure('bundling');
-my $json_file = '';
-GetOptions( 'json|f=s', \$json_file )
-or die("Error in command line arguments\n");
-
-setting_the_stage();
-
-# Get json string;
-my $json = '';
-
-# If file exists slurp
-if (-f $json_file) {
-   open my $json_fh, "<", $json_file or die $!;
-   {
-      local $/;
-      $json = <$json_fh>;
-   }
-   close $json_fh;
-} else {
-   $json = $json_file;
-}
-
-my $msgs = choreograph($json);
-
-
-if (@{ $msgs->{'success'} }) {
-   #print "Success:\n";
-   foreach my $msg ( @{ $msgs->{'success'} } ) {
-      print GREEN, $msg."\n", RESET;
-   }
-}
-if (@{ $msgs->{'errors'} }) {
-   #print "Errors:\n";
-   foreach my $msg ( @{ $msgs->{'errors'} } ) {
-      print RED, $msg."\n", RESET;
-   }
-}
-if (@{ $msgs->{'output'} }) {
-   print "Output:\n";
-   foreach my $msg ( @{ $msgs->{'output'} } ) {
-      print $msg."\n";
-   }
-}
-1;
+exit Dancer::Choreographer::CLI->new->run(@ARGV);
 
 __END__
+
+=head1 NAME
+
+choreographer - An opinionated scaffolding tool for Dancer Applications.
+
+=head1 SYNOPSIS
+
+  > choreographer init
+  > choreographer
+
+=head1 Commands
+
+=head2 init
+
+Initiallize an existing Dancer directory applying Choreographers standards.
+
+When run without a command, choreographer defaults to 'init'
+
+=head2 new
+
+This command is used to create anything from scratch. Under this command are several other commands such as the following:
+
+=head3 app [name]
+
+This sub command creates a Dancer app and applies Choreographer to that.
+
+=head3 model [name]
+
+This sub command creates a new model in the current project.
+
+The 
+
+=head1 JSON Format
 
 Example Json
 '[
@@ -115,3 +104,13 @@ Example Json
                           }
           }
         ]'
+
+=head1 DESCRIPTION
+
+For more documentation, refer to L<Dancer::Choreographer> by running C<perldoc Dancer::Choreographer> or C<choreographer --help>.
+
+=head1 SEE ALSO
+
+L<Dancer::Choreographer>
+
+=cut
