@@ -15,27 +15,4 @@ else
 sudo cpanm carton
 fi
 
-if command -v dancer >/dev/null 2>&1
-then
-echo "Dancer found"
-else
-sudo cpanm dancer
-fi
-
-if perl -MPPI -e 'print "$PPI::VERSION\n"' >/dev/null 2>&1
-then
-echo "PPI found"
-else
-echo "Installing PPI"
-sudo cpanm PPI
-fi
-
-if perl -MFile::Which -e 'print "$File::Which::VERSION\n"' >/dev/null 2>&1
-then
-echo "File::Which found"
-else
-echo "Installing File::Which"
-sudo cpanm File::Which
-fi
-
 echo "Done"
