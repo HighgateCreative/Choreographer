@@ -7,6 +7,8 @@ use Term::ANSIColor qw(:constants);
 use Getopt::Long;
 use Try::Tiny;
 
+use Dancer::Choreographer::Environment;
+
 Getopt::Long::Configure('bundling');
 
 sub run {
@@ -51,17 +53,44 @@ sub commands {
 
 # By Tatsuhiko Miyagawa
 sub parse_options {
-    my($self, $args, @spec) = @_;
-    my $p = Getopt::Long::Parser->new(
-        config => [ "no_auto_abbrev", "no_ignore_case" ],
-    );
-    $p->getoptionsfromarray($args, @spec);
+   my($self, $args, @spec) = @_;
+   my $p = Getopt::Long::Parser->new(
+      config => [ "no_auto_abbrev", "no_ignore_case" ],
+   );
+   $p->getoptionsfromarray($args, @spec);
 }
 
-sub cmd_install {
-   # Create Dancer app
+sub cmd_init {
+   my($self, @args) = @_;
+   # Apply Choreographer to Dancer app
+
+   my($app_dir, $cpanfile_path);
+
+   $self->parse_options(
+      \@args,
+      "p|path=s"    => \$app_dir,
+      "cpanfile=s"  => \$cpanfile_path,
+   );
+
+   my $env = Dancer::Choreographer::Environment->build($app_dir, $cpanfile_path);
 }
 
+sub cmd_new {
+   my $self = shift;
+   # Create new Dancer app
+
+   # Run init on the newly created app
+   $self->cmd_init();
+}
+
+sub cmd_add {
+   my $self = shift;
+   # Add new models to the current project
+}
+
+sub _check_if_init {
+   my $self = shift;
+}
 
 
 # @TODO Reintegrate the following code.

@@ -33,17 +33,13 @@ Initiallize an existing Dancer directory applying Choreographers standards.
 
 When run without a command, choreographer defaults to 'init'
 
-=head2 new
+=head2 new [name]
 
-This command is used to create anything from scratch. Under this command are several other commands such as the following:
+This command creates a Dancer app and applies Choreographer to that.
 
-=head3 app [name]
+=head2 add model [name]
 
-This sub command creates a Dancer app and applies Choreographer to that.
-
-=head3 model [name]
-
-This sub command creates a new model in the current project.
+This command creates a new model in the current project. You must be in the base directory of the project for it to work.
 
 The 
 
