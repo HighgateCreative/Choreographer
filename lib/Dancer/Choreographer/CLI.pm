@@ -7,7 +7,10 @@ use Term::ANSIColor qw(:constants);
 use Getopt::Long;
 use Try::Tiny;
 
+use Dancer::Choreographer;
 use Dancer::Choreographer::Environment;
+use Dancer::Choreographer::Crew;
+use Dancer::Choreographer::Producer;
 
 Getopt::Long::Configure('bundling');
 
@@ -60,9 +63,9 @@ sub parse_options {
    $p->getoptionsfromarray($args, @spec);
 }
 
+# Apply Choreographer to Dancer app
 sub cmd_init {
    my($self, @args) = @_;
-   # Apply Choreographer to Dancer app
 
    my($app_dir, $cpanfile_path);
 
@@ -73,14 +76,30 @@ sub cmd_init {
    );
 
    my $env = Dancer::Choreographer::Environment->build($app_dir, $cpanfile_path);
+
+   my $crew = Dancer::Choreographer::Crew->new();
+   $crew->init();
 }
 
+# Create new Dancer app and apply Choreographer
 sub cmd_new {
-   my $self = shift;
-   # Create new Dancer app
+   my($self, @args) = @_;
 
-   # Run init on the newly created app
-   $self->cmd_init();
+   my($app_dir, $cpanfile_path);
+
+   $self->parse_options(
+      \@args,
+      "p|path=s"    => \$app_dir,
+   );
+
+   my $app_name = shift;
+
+   my $env = Dancer::Choreographer::Environment->build($app_dir);
+
+   # Build Dancer App
+   # Initialize it
+   my $crew = Dancer::Choreographer::Crew->new();
+   $crew->init();
 }
 
 sub cmd_add {
