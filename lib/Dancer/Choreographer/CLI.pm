@@ -39,6 +39,8 @@ sub run {
       $self->$call(@commands);
       return 0;
    } catch {
+      use Data::Dumper;
+      print "\$_: ".Dumper($_)."\n";
       die $_ unless blessed $_ && $_->can('rethrow'); # @TODO Figure out if I should use Throwable or Exception::Class
    };
 
@@ -77,7 +79,10 @@ sub cmd_init {
 
    my $env = Dancer::Choreographer::Environment->build($app_dir, $cpanfile_path);
 
-   my $crew = Dancer::Choreographer::Crew->new();
+   my $crew = Dancer::Choreographer::Crew->new(
+      app_dir => $env->app_dir,
+      cpanfile => $env->cpanfile,
+   );
    $crew->init();
 }
 
@@ -98,7 +103,9 @@ sub cmd_new {
 
    # Build Dancer App
    # Initialize it
-   my $crew = Dancer::Choreographer::Crew->new();
+   my $crew = Dancer::Choreographer::Crew->new(
+      app_dir => $env->app_dir,
+   );
    $crew->init();
 }
 

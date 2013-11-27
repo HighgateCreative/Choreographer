@@ -7,3 +7,4 @@ requires 'Path::Tiny', 0;
 requires 'Module::CPANfile', 0;
 requires 'Moo', 0;
 requires 'Carton', 0;
+requires 'Git::Wrapper', 0;

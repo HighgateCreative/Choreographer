@@ -3,7 +3,8 @@ use Moo;
 use strict;
 use warnings;
 
-use Carton::CPANfile;
+use Module::CPANfile;
+use CPAN::Meta::Requirements;
 use Path::Tiny;
 
 has cpanfile => (is => 'rw');
@@ -15,7 +16,8 @@ sub _build_app_dir {
 
     # Base App_dir first on the directory of 
     my $try = Path::Tiny->cwd->child('config.yml');
-    if ($try->is_file}) {
+
+    if ($try->is_file) {
       return Path::Tiny->cwd;
     # else base it off the location of the cpanfile
     } elsif ($self->cpanfile) {
@@ -27,23 +29,27 @@ sub _build_app_dir {
 
 # Setup Environment
 sub build {
-    my($class, $app_dir, $cpanfile_path) = @_;
+   my($class, $app_dir, $cpanfile_path) = @_;
 
-    # Create Moo object
-    my $self = $class->new;
+   # Create Moo object
+   my $self = $class->new;
 
-    # ----- Setup Carton file -----
-    $cpanfile_path &&= Path::Tiny->new($cpanfile_path)->absolute;
+   # ----- Setup Carton file -----
+   $cpanfile_path &&= Path::Tiny->new($cpanfile_path)->absolute;
 
-    # Setup App Directory
-    $self->app_dir($app_dir) if $app_dir;
+   # Setup App Directory
+   $self->app_dir($app_dir) if $app_dir;
 
-    my $cpanfile = $self->locate_cpanfile($cpanfile_path);
-    if ($cpanfile && $cpanfile->is_file) {
-        $self->cpanfile( Carton::CPANfile->new(path => $cpanfile) );
-    } else {
-        $self->cpanfile( Carton::CPANfile->new(path => $self->app_dir."cpanfile") );
-    }
+   my $cpanfile = $self->locate_cpanfile($cpanfile_path);
+   if ($cpanfile && $cpanfile->is_file) {
+        $self->cpanfile( Module::CPANfile->load($cpanfile) );
+   } else {
+      if ( Path::Tiny->new($self->app_dir."/cpanfile")->is_file ) {
+         $self->cpanfile( Module::CPANfile->load($self->app_dir."/cpanfile") );
+      } else {
+         $self->cpanfile( Module::CPANfile->from_prereqs() );
+      }
+   }
 
     $self;
 }

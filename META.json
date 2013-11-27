@@ -4,7 +4,7 @@
       "Sean Zellmer <sean@lejeunerenard.com>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Milla version v1.0.4, Dist::Zilla version 5.006, CPAN::Meta::Converter version 2.132830",
+   "generated_by" : "Dist::Milla version v1.0.4, Dist::Zilla version 4.300038, CPAN::Meta::Converter version 2.131560",
    "license" : [
       "perl_5"
    ],
@@ -26,7 +26,7 @@
    "prereqs" : {
       "configure" : {
          "requires" : {
-            "Module::Build::Tiny" : "0.030"
+            "Module::Build::Tiny" : "0.027"
          }
       },
       "develop" : {
@@ -36,11 +36,16 @@
       },
       "runtime" : {
          "requires" : {
+            "Carton" : "0",
             "Dancer" : "0",
             "File::Path" : "0",
             "File::Which" : "0",
+            "Git::Wrapper" : "0",
             "JSON" : "0",
-            "PPI" : "0"
+            "Module::CPANfile" : "0",
+            "Moo" : "0",
+            "PPI" : "0",
+            "Path::Tiny" : "0"
          }
       }
    },
@@ -56,6 +61,6 @@
          "web" : "https://github.com/HighgateCross/Choreographer"
       }
    },
-   "version" : "0.01"
+   "version" : "v0.01"
 }
 

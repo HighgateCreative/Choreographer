@@ -16,7 +16,7 @@ Sean Zellmer <sean@lejeunerenard.com>
 
 # COPYRIGHT
 
-Copyright 2013- Sean Zellmer
+Copyright 2013 Sean Zellmer
 
 # LICENSE
 
