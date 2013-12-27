@@ -1,6 +1,7 @@
 package Dancer::Choreographer::Crew;
 use Moo;
 use Git::Wrapper;
+use Carton::CLI;
 
 use strict;
 use warnings;
@@ -36,6 +37,7 @@ sub init {
    $self->app_dir->child('public/documents')->mkpath;
 
    # Create Reuqirements
+   print "Creating cpanfile...\n";
    my $req;
    if ($self->cpanfile->prereq_specs) {
       $req = CPAN::Meta::Requirements->from_string_hash($self->cpanfile->prereq_specs->{runtime}{requires});
@@ -63,13 +65,16 @@ sub init {
    $self->cpanfile->save($self->app_dir."/cpanfile");
 
    # Append to .gitignore
+   print "Creating .gitignore...\n";
    open(GITIGN, ">> ".$self->app_dir."/.gitignore");
    print GITIGN ".carton\n"; 
    print GITIGN "local/\n"; 
    print GITIGN "*.sw[pqor]\n"; 
    close GITIGN;
 
-
+   # Run Carton
+   print "Running Carton...\n";
+   Carton::CLI->new->cmd_install('--cpanfile', $self->app_dir."/cpanfile", '--path',$self->app_dir."/local");
 }
 
 1;
