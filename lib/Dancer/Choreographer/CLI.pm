@@ -1,11 +1,10 @@
 package Dancer::Choreographer::CLI;
 use Moo;
 
-use Dancer;
-
 use Term::ANSIColor qw(:constants);
 use Getopt::Long;
 use Try::Tiny;
+use Scalar::Util 'blessed';
 
 use Dancer::Choreographer;
 use Dancer::Choreographer::Environment;
@@ -39,8 +38,6 @@ sub run {
       $self->$call(@commands);
       return 0;
    } catch {
-      use Data::Dumper;
-      print "\$_: ".Dumper($_)."\n";
       die $_ unless blessed $_ && $_->can('rethrow'); # @TODO Figure out if I should use Throwable or Exception::Class
    };
 

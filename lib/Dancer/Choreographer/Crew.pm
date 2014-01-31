@@ -3,9 +3,6 @@ use Moo;
 use Git::Wrapper;
 use Carton::CLI;
 
-use strict;
-use warnings;
-
 has cpanfile => (is => 'rw');
 has app_dir => (is => 'rw');
 
@@ -74,7 +71,8 @@ sub init {
 
    # Run Carton
    print "Running Carton...\n";
-   Carton::CLI->new->cmd_install('--cpanfile', $self->app_dir."/cpanfile", '--path',$self->app_dir."/local");
+
+   Carton::CLI->new->run('install','--cpanfile', $self->app_dir."/cpanfile", '--path',$self->app_dir."/local");
 }
 
 1;

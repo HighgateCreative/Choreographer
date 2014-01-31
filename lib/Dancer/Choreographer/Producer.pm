@@ -5,7 +5,6 @@ use strict;
 use warnings;
 
 use PPI;
-use JSON;
 use File::Which;
 
 use Data::Dumper;
@@ -30,6 +29,7 @@ sub setting_the_stage {
 }
 
 sub choreograph {
+   require JSON;
    my $json = shift;
    my $params = from_json($json);
 

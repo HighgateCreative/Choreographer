@@ -45,7 +45,8 @@
             "Module::CPANfile" : "0",
             "Moo" : "0",
             "PPI" : "0",
-            "Path::Tiny" : "0"
+            "Path::Tiny" : "0",
+            "Scalar::Util" : "0"
          }
       }
    },

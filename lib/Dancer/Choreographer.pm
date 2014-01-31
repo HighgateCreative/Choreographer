@@ -6,9 +6,9 @@ use warnings;
 use 5.008_005;
 use version; our $VERSION = version->declare("0.01");
 
-use JSON;
 
 sub choreograph {
+   require JSON;
    my $json = shift;
    my $params = from_json($json);
 }
