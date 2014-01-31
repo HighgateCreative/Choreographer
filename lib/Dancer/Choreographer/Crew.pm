@@ -73,6 +73,14 @@ sub init {
    print "Running Carton...\n";
 
    Carton::CLI->new->run('install','--cpanfile', $self->app_dir."/cpanfile", '--path',$self->app_dir."/local");
+
+   # Add use lib for local carton installed module
+   print "Running Carton...\n";
+   open(my $bin_app, '<', $self->app_dir."/bin/app.pl") or warn "Unable to add lib dir to bin/app.pl : $!";
+   (my $bin_app_content = join('', <$bin_app>)) =~ s/use Dancer;/use lib 'local\/lib\/perl5';\nuse Dancer;/i;
+   open($bin_app, '>', $self->app_dir."/bin/app.pl") or warn "Unable to add lib dir to bin/app.pl : $!";
+   print $bin_app $bin_app_content;
+   close $bin_app;
 }
 
 1;
