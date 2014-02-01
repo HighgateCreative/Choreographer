@@ -5,6 +5,7 @@ use Term::ANSIColor qw(:constants);
 use Getopt::Long;
 use Try::Tiny;
 use Scalar::Util 'blessed';
+use File::Which;
 
 use Dancer::Choreographer;
 use Dancer::Choreographer::Environment;
@@ -93,12 +94,19 @@ sub cmd_new {
       \@args,
       "p|path=s"    => \$app_dir,
    );
+   $app_dir = "." unless defined $app_dir;
 
-   my $app_name = shift;
+   # ----- Build Dancer App -----
+   my $app_name = $args[0];
+
+   # Get where dancer is
+   my $dancer_cmd_path = which('dancer');
+   my $path_option = ($app_dir) ? " --path ".$app_dir : '';
+   die "Failed to create new dancer app called ".$app_name."." unless system($dancer_cmd_path.$path_option." -a ".$app_name) == 0;
+   chdir($app_dir.'/'.$app_name) or die "Something went wrong changing into new daner app directory."; 
 
    my $env = Dancer::Choreographer::Environment->build($app_dir);
 
-   # Build Dancer App
    # Initialize it
    my $crew = Dancer::Choreographer::Crew->new(
       app_dir => $env->app_dir,
