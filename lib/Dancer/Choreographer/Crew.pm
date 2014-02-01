@@ -36,7 +36,7 @@ sub init {
    # Create Reuqirements
    print "Creating cpanfile...\n";
    my $req;
-   if ($self->cpanfile->prereq_specs) {
+   if ($self->cpanfile and $self->cpanfile->prereq_specs) {
       $req = CPAN::Meta::Requirements->from_string_hash($self->cpanfile->prereq_specs->{runtime}{requires});
    } else {
       $req = CPAN::Meta::Requirements->new();
