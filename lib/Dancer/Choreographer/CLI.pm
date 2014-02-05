@@ -80,6 +80,7 @@ sub cmd_init {
    my $crew = Dancer::Choreographer::Crew->new(
       app_dir => $env->app_dir,
       cpanfile => $env->cpanfile,
+      app_name => $env->app_name,
    );
    $crew->init();
 }
@@ -110,6 +111,7 @@ sub cmd_new {
    # Initialize it
    my $crew = Dancer::Choreographer::Crew->new(
       app_dir => $env->app_dir,
+      app_name => $env->app_name,
    );
    $crew->init();
 }

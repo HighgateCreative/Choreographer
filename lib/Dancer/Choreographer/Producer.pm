@@ -6,6 +6,7 @@ use warnings;
 
 use PPI;
 use File::Which;
+use File::Path 'mkpath';
 
 use Data::Dumper;
 
@@ -748,6 +749,18 @@ sub our_safe_mkdir {
     if (not -d $dir) {
         mkpath $dir or die "could not mkpath $dir: $!";
     }
+}
+
+sub match_in_file {
+   my $file = shift;
+   my $pattern = shift;
+
+   die "$file Doesnt Exist" unless -e $file;
+
+   open(my $fh, "<", $file);
+   my @lines = <$fh>;
+   close $fh;
+   return ( grep {/$pattern/} @lines );
 }
 1;
 __END__

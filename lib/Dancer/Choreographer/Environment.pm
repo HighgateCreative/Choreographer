@@ -6,10 +6,12 @@ use warnings;
 use Module::CPANfile;
 use CPAN::Meta::Requirements;
 use Path::Tiny;
+use YAML qw /LoadFile/;
 
 has cpanfile => (is => 'rw');
 has sequences => (is => 'rw'); # json file with the current definition for the Choreogrpaher app
 has app_dir => (is => 'rw', lazy => 1, builder => 1, coerce => sub { Path::Tiny->new($_[0])->absolute });
+has app_name => (is => 'rw', lazy => 1, builder => 1);
 
 sub _build_app_dir {
     my $self = shift;
@@ -21,9 +23,28 @@ sub _build_app_dir {
       return Path::Tiny->cwd;
     # else base it off the location of the cpanfile
     } elsif ($self->cpanfile) {
+       #@TODO broken because cpanfile doesnt have a method dirname
       return $self->cpanfile->dirname;
     } else {
       die "Could not determine app_dir";
+    }
+}
+
+sub _build_app_name {
+    my $self = shift;
+
+    # Base App_name on the config.yml file if it exists 
+    my $try = Path::Tiny->cwd->child('config.yml');
+
+    # Use
+    if ($try->is_file) {
+       my $yaml = LoadFile($try);
+       return $yaml->{appname};
+    # else base it off the app dir
+    } elsif ( $self->app_dir =~ /.*\/(.*)\/?$/ ) {
+       return $1;
+    } else {
+      die "Could not determine the app name.";
     }
 }
 
