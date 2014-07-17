@@ -1,4 +1,8 @@
 package Dancer::Choreographer::Crew;
+
+use strict;
+use warnings;
+
 use Moo;
 use Git::Wrapper;
 use Carton::CLI;
