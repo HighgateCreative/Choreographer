@@ -77,7 +77,7 @@ sub init {
    $req->add_minimum('HTML::TagFilter' => 0);
    $req->add_minimum('DBIx::Class::Validation::Structure' => 0);
    $req->add_minimum('HTML::FillInForm' => 0);
-   
+
    # @TODO Make it so other phases arent clobbered
    # @TODO Support reading from other file formats for dependencies
    # Set new cpanfile
@@ -93,9 +93,10 @@ sub init {
    # Append to .gitignore
    print "Creating .gitignore...\n";
    open(GITIGN, ">> ".$self->app_dir."/.gitignore");
-   print GITIGN ".carton\n"; 
-   print GITIGN "local/\n"; 
-   print GITIGN "*.sw[pqor]\n"; 
+   print GITIGN ".carton\n";
+   print GITIGN "local/\n";
+   print GITIGN "*.sw[pqor]\n";
+   print GITIGN "share/*.db\n";
    close GITIGN;
 
    # Run Carton
