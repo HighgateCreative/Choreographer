@@ -232,7 +232,8 @@ __PACKAGE__->add_columns(
 ";
       # Loop through model attributes adding column info
       for my $j ( 0 .. $#{ $models->[$i]{'attributes'} } ) {
-         my $data_type = $data_types{ $models->[$i]{'attributes'}[$j]{'type'} };
+         next if $models->[$i]{'attributes'}[$j]{'type'} eq 'session_variable';
+         my $data_type = $data_types{ $models->[$i]{'attributes'}[$j]{'type'} } || '';
          my $size = $models->[$i]{'attributes'}[$j]{'max_length'};
          if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
             $size = 255;
@@ -481,6 +482,9 @@ sub create_model_edit_view {
          # Flag that the model has a datepicker
          $model->{datepicker} = 1;
       # -- Text field --
+      } elsif ($model->{'attributes'}[$i]{'type'} eq 'session_variable') {
+         $template .= "
+      <input type='name' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' />";
       } else {
          $template .= "
       <input type='text' name='$model->{'attributes'}[$i]{'label_unreadable'}' value='' maxlength='$model->{'attributes'}[$i]{'max_length'}' />";
