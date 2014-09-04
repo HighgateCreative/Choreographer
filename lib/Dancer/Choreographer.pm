@@ -53,9 +53,9 @@ sub choreograph {
 
       # Check if working with a module only or not
       if ($params->[$i]{'settings'}{'module_only'}) {
-			   # Check to see if Schema has been created
-		     our_safe_mkdir($params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/");
-				 write_files( $params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/Schema.pm",
+            # Check to see if Schema has been created
+           our_safe_mkdir($params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/");
+             write_files( $params->[$i]{'settings'}{'app_path'}."/lib/".$params->[$i]{'settings'}{'app_name'}."/Schema.pm",
 "package $params->[$i]{'settings'}{'app_name'}::Schema;
 
 use strict;
@@ -706,7 +706,7 @@ del '/:id' => sub {
 # ---- Views -----
 
 get '/add/?' => sub {
-	template '".$model_name."/".$model_name."_edit', \\\%tmpl_params;
+   template '".$model_name."/".$model_name."_edit', \\\%tmpl_params;
 };
 
 get '/edit/:id' => sub {
@@ -721,7 +721,7 @@ get '/edit/:id' => sub {
       }
    }
    $route_file .= "
-	fillinform('$model_name/".$model_name."_edit', \\%tmpl_params);
+   fillinform('$model_name/".$model_name."_edit', \\%tmpl_params);
 };
 
 }; # End prefix
