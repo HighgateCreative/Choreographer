@@ -626,33 +626,21 @@ sub create_model_controllers {
 
       my $route_file =
 "package ".$result_name.";
-use Dancer ':syntax';
-use Dancer::Plugin::DBIC;
-use HTML::FillInForm;
-use Data::Dumper;
-use Stagehand::Stagehand;
-
-# Setup Models' 'aliases'
-sub $result_name { model('$result_name'); }
-
+use Common;
 
 prefix '/".$model_name."s' => sub {
-
-my \%tmpl_params;
-hook 'before' => sub {
-   # Clear tmpl Params;
-   \%tmpl_params = ();
-};
 
 # ==== CRUD =====
 
 # Read
 get '/?:id?' => sub {
+   my %tmpl_params = %{ var 'tmpl_params'  };
    if ( param 'id' ) {
-      \$tmpl_params{$model_name} = ".$result_name."->find(param 'id');   # \\\@{[ ]} will force a list context
+      pass if param('id') !~ /\\d+/i;
+      \$tmpl_params{$model_name} = ".$result_name."s->find(param 'id');   # \\\@{[ ]} will force a list context
       template '".$model_name."/".$model_name."_read', \\\%tmpl_params;
    } else {
-      \$tmpl_params{".$model_name."s} = \\\@{[".$result_name."->all]};   # \\\@{[ ]} will force a list context
+      \$tmpl_params{".$model_name."s} = \\\@{[".$result_name."s->all]};   # \\\@{[ ]} will force a list context
       template '".$model_name."/".$model_name."_list', \\\%tmpl_params;
    }
 };
@@ -664,7 +652,7 @@ post '/?:id?' => sub {
    my \%params = params;
    my \$success;
 
-   my \$result = ".$result_name."->create( \\\%params );
+   my \$result = ".$result_name."s->create( \\\%params );
    if (\$result->{errors}) {
       return \$result;
    }
@@ -685,7 +673,7 @@ sub put_cntrl {
    my \%params = params;
    my \$success;
 
-   my \$result = ".$result_name."->find(param 'id')->update( \\\%params );
+   my \$result = ".$result_name."s->find(param 'id')->update( \\\%params );
    if (\$result->{errors}) {
       return \$result;
    }
@@ -695,25 +683,24 @@ sub put_cntrl {
 
 # Delete
 get '/delete/:id' => sub {
-   ".$result_name."->find(param 'id')->delete();
+   ".$result_name."s->find(param 'id')->delete();
    redirect '/".$model_name."s/';
 };
 del '/:id' => sub {
-   ".$result_name."->find(param 'id')->delete();
+   ".$result_name."s->find(param 'id')->delete();
    redirect '/".$model_name."s/';
 };
 
 # ---- Views -----
 
 get '/add/?' => sub {
+   my %tmpl_params = %{ var 'tmpl_params'  };
    template '".$model_name."/".$model_name."_edit', \\\%tmpl_params;
 };
 
 get '/edit/:id' => sub {
-   if (param 'id') { \$tmpl_params{$model_name} = ".$result_name."->find(param 'id'); }
-   %tmpl_params = (%tmpl_params, %{".$result_name."->search({ id => param 'id' }, {
-      result_class => 'DBIx::Class::ResultClass::HashRefInflator',
-   })->next});";
+   my %tmpl_params = %{ var 'tmpl_params'  };
+   \$tmpl_params{$model_name} = ".$result_name."s->find(param 'id');";
    for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
       if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
          $route_file .= "
@@ -721,7 +708,7 @@ get '/edit/:id' => sub {
       }
    }
    $route_file .= "
-   fillinform('$model_name/".$model_name."_edit', \\%tmpl_params);
+   fillinform('$model_name/".$model_name."_edit', \\%tmpl_params, undef, '$model_name');
 };
 
 }; # End prefix
