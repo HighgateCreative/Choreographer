@@ -646,7 +646,7 @@ get '/?:id?' => sub {
 };
 
 # Create
-post '/?:id?' => sub {
+post '/?' => sub {
    set serializer => 'JSON';
 
    my \%params = params;
