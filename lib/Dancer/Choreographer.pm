@@ -656,7 +656,16 @@ post '/?' => sub {
    if (\$result->{errors}) {
       return \$result;
    }
-   \$success = \"$models->[$i]{'table_name'} added Successfully\";
+
+   ";
+   for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
+      if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+         $route_file .= "
+   my \$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload = upload('$models->[$i]{'attributes'}[$j]{'label_unreadable'}');
+   \$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload->copy_to('./public/documents/'.\$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload->basename);";
+      }
+   }
+   $route_file .= "\$success = \"$models->[$i]{'table_name'} added Successfully\";
    return { success => [ { success => \$success } ] };
 };
 
@@ -676,7 +685,17 @@ sub put_cntrl {
    my \$result = ".$result_name."s->find(param 'id')->update( \\\%params );
    if (\$result->{errors}) {
       return \$result;
+   }";
+   for my $j ( 0 .. $#{$models->[$i]{'attributes'}} ) {
+      if ($models->[$i]{'attributes'}[$j]{'type'} eq 'file') {
+         $route_file .= "
+   if (param '$models->[$i]{'attributes'}[$j]{'label_unreadable'}') {}
+      my \$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload = upload('$models->[$i]{'attributes'}[$j]{'label_unreadable'}');
+      \$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload->copy_to('./public/documents/'.\$$models->[$i]{'attributes'}[$j]{'label_unreadable'}_upload->basename);
+   }";
+      }
    }
+   $route_file .= "
    \$success = \"$models->[$i]{'table_name'} updated Successfully\";
    return { success => [ { success => \$success } ] };
 }
