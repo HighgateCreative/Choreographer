@@ -637,10 +637,10 @@ get '/?:id?' => sub {
    my %tmpl_params = %{ var 'tmpl_params'  };
    if ( param 'id' ) {
       pass if param('id') !~ /\\d+/i;
-      \$tmpl_params{$model_name} = ".$result_name."s->find(param 'id');   # \\\@{[ ]} will force a list context
+      \$tmpl_params{$model_name} = ".$result_name."s->find(param 'id');
       template '".$model_name."/".$model_name."_read', \\\%tmpl_params;
    } else {
-      \$tmpl_params{".$model_name."s} = \\\@{[".$result_name."s->all]};   # \\\@{[ ]} will force a list context
+      \$tmpl_params{".$model_name."s} = [".$result_name."s->all];
       template '".$model_name."/".$model_name."_list', \\\%tmpl_params;
    }
 };
